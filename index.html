@@ -4,6 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Confirmar Pagamento</title>
+    <!-- Adiciona o SDK do Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyAD_MFATrOhmxTTr3COBk0gEbIKPq6tw_I",
+          authDomain: "gym-controllapp.firebaseapp.com",
+          projectId: "gym-controllapp",
+          storageBucket: "gym-controllapp.firebasestorage.app",
+          messagingSenderId: "587927478068",
+          appId: "1:587927478068:web:153b3e7be32fff460f4f61"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const paymentId = params.get('id');
+            const valor = params.get('valor');
+
+            const valueEl = document.getElementById('payment-value');
+            const confirmBtn = document.getElementById('confirm-button');
+            const confirmationBox = document.getElementById('confirmation-box');
+            const successBox = document.getElementById('success-box');
+
+            if (valor) {
+                valueEl.textContent = parseFloat(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            }
+
+            confirmBtn.addEventListener('click', async () => {
+                if (paymentId) {
+                    try {
+                        const paymentDocRef = doc(db, "pending_payments", paymentId);
+                        // Atualiza o documento no Firestore para "CONFIRMED"
+                        await updateDoc(paymentDocRef, { status: "CONFIRMED" });
+
+                        confirmationBox.style.display = 'none';
+                        successBox.style.display = 'block';
+                        confirmBtn.disabled = true;
+                    } catch (error) {
+                        console.error("Erro ao confirmar pagamento:", error);
+                        alert("Ocorreu um erro. Tente novamente.");
+                    }
+                }
+            });
+        });
+    </script>
     <style>
         :root {
             --bg-deep-space: #121822; --bg-ui-element: #1B263B; --border-color: #415A77;
@@ -46,34 +96,5 @@
         <p>Obrigado! Pode fechar esta página.</p>
         <p>O seu aplicativo GymControl será atualizado automaticamente.</p>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const params = new URLSearchParams(window.location.search);
-            const paymentId = params.get('id');
-            const valor = params.get('valor');
-
-            const valueEl = document.getElementById('payment-value');
-            const confirmBtn = document.getElementById('confirm-button');
-            const confirmationBox = document.getElementById('confirmation-box');
-            const successBox = document.getElementById('success-box');
-
-            if (valor) {
-                valueEl.textContent = parseFloat(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            }
-
-            confirmBtn.addEventListener('click', () => {
-                if (paymentId) {
-                    // Usa o localStorage para comunicar de volta ao app Electron
-                    // Esta ação será "ouvida" pelo seu aplicativo no computador.
-                    localStorage.setItem(`payment-status-${paymentId}`, 'CONFIRMED');
-                    
-                    confirmationBox.style.display = 'none';
-                    successBox.style.display = 'block';
-                    confirmBtn.disabled = true;
-                }
-            });
-        });
-    </script>
 </body>
 </html>
